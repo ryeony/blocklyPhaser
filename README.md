@@ -8,7 +8,7 @@ Hour of Code mock-up using phaser 3, blockly blocks and JS-Interpreter.
   - Starting point to get blockly to output something in html page
   
 
-[Online Demo](http://mathcart.com/blockly-phaser3/ "MathCart.com")
+[Online Demo](https://ryeony.github.io/blocklyPhaser/)
 
 ### Installation
 
