@@ -9,7 +9,6 @@
   <script src="https://blockly-demo.appspot.com/static/blocks_compressed.js"></script>
   <script src="https://blockly-demo.appspot.com/static/javascript_compressed.js"></script>
   <script src="https://blockly-demo.appspot.com/static/msg/js/en.js"></script>
-  <script src="./phaser.js"></script>
   <script src="wait_block.js"></script>
   <script src="movement_block.js"></script>
   <script src="movement_stub.js"></script>
@@ -27,7 +26,7 @@
   </p>
   
   <div style="width: 100%">
-    <div id="blocklyDiv" style="display: inline-block; height: px; width: 50%"></div>
+    <div id="blocklyDiv" style="display: inline-block; height: 480px; width: 58%"></div>
     <div id="right" class="column column-right"></div>
     <textarea id="output" disabled="disabled" style="display: inline-block; height: 480px; width: 38%;">
     </textarea>
@@ -458,34 +457,37 @@
     var runner;
 
     function initApi(interpreter, scope) {
-     // Add an API function for the alert() block.
-      var wrapper = function(text) {
-        return alert(arguments.length ? text : '');
+      // Add an API function for the alert() block, generated for "text_print" blocks.
+      var wrapper = function (text) {
+        text = text ? text.toString() : '';
+        outputArea.value = outputArea.value + '\n' + text;
       };
       interpreter.setProperty(scope, 'alert',
-      interpreter.createNativeFunction(wrapper));
+        interpreter.createNativeFunction(wrapper));
+
 
       // Add an API function for the prompt() block.
-      wrapper = function(text) {
-        return prompt(text);
+      var wrapper = function (text) {
+        text = text ? text.toString() : '';
+        return interpreter.createPrimitive(1);
       };
       interpreter.setProperty(scope, 'prompt',
-      interpreter.createNativeFunction(wrapper));
+        interpreter.createNativeFunction(wrapper));
       
       // Add an API function for the jump() block.
-      wrapper = function (text) {
+      var wrapper = function (text) {
         text = text ? text.toString() : '';
         //return interpreter.createPrimitive(prompt(text));
       };
+
       interpreter.setProperty(scope, 'jump',
-      interpreter.createNativeFunction(wrapper));
+        interpreter.createNativeFunction(wrapper));
 
       // Add all the custom block api calls here
       initInterpreterWaitForSeconds(interpreter, scope);
       initInterpreterGoRight(interpreter, scope);
       initInterpreterGoLeft(interpreter, scope);
       initInterpreterDisplayText(interpreter, scope);
-
       // Add an API function for highlighting blocks.
       var wrapper = function (id) {
         id = id ? id.toString() : '';
@@ -591,7 +593,136 @@
 
 
 
+<!--phaser-->
+  <script type="text/javascript">
 
+    var config = {
+      type: Phaser.AUTO,
+      width: 500,
+      height: 500,
+      parent: document.getElementById("right"),
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 300 },
+          debug: false
+        }
+      },
+      scene: {
+        preload: preload,
+        create: create,
+        update: update,
+        render: render
+      }
+    };
+
+    var game = new Phaser.Game(config);
+    var player;
+    var platforms;
+    var cursors;
+    var bombs;
+    var displayText;
+
+
+    function preload() {
+      this.load.image('sky', 'assets/sky.png');
+      this.load.image('ground', 'assets/platform.png');
+      this.load.image('star', 'assets/star.png');
+      this.load.image('bomb', 'assets/bomb.png');
+      this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+    }
+
+    function create() {
+      cursors = this.input.keyboard.createCursorKeys();
+      this.add.image(400, 300, 'sky');
+      platforms = this.physics.add.staticGroup();
+      platforms.create(400, 300, 'ground').setScale(2).refreshBody();
+
+      //bombs = this.physics.add.staticGroup();
+      bombs = this.physics.add.group();
+      this.physics.add.collider(bombs, platforms);
+
+      player = this.physics.add.sprite(100, 200, 'dude');
+      var bomb = bombs.create(200, 16, 'bomb');
+      
+      player.setBounce(0.2);
+      player.setCollideWorldBounds(true);
+
+      this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+      });
+
+      this.anims.create({
+        key: 'turn',
+        frames: [{ key: 'dude', frame: 4 }],
+        frameRate: 20
+      });
+
+      this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+      });
+
+      displayText = this.add.text(100, 150, '', { fontSize: '32px', fill: '#000' });
+
+      cursors = this.input.keyboard.createCursorKeys();
+
+      this.physics.add.collider(player, platforms);
+
+      this.physics.add.collider(player, bombs, hitBomb, null, this);
+
+    }
+
+    var goToTheRight = false;
+    var goToTheLeft = false;
+    var goJump = false;
+    function update() {
+      if (cursors.up.isDown) {
+
+      }
+      if (cursors.left.isDown || goToTheLeft) {
+        goLeft()
+      }
+      else if (cursors.right.isDown || goToTheRight) {
+        goRight();
+        
+      }
+      else {
+        player.setVelocityX(0);
+        player.anims.play('turn');
+      }
+
+      if ((cursors.up.isDown || goJump==true) && player.body.touching.down) {
+        console.log(goJump)
+        player.setVelocityY(-200);
+      }
+
+      
+
+
+    }
+
+    function hitBomb(player, bomb) {
+      this.physics.pause();
+
+      player.setTint(0xff0000);
+
+      player.anims.play('turn');
+
+      gameOver = true;
+    }
+
+
+
+
+
+
+  </script>
 
 
 </body>
